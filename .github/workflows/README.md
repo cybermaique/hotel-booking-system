@@ -1,118 +1,49 @@
-# Workflows de CI/CD
+# 🧩 Workflows de CI/CD
 
-Este diretório contém os workflows de integração contínua e deploy contínuo do projeto.
+Este diretório contém os **workflows de integração contínua (CI)** e **deploy contínuo (CD)** do projeto **Hotel Booking System**.
 
-## Workflows Disponíveis
+---
 
-### 1. CI Pipeline (`ci.yml`)
+## ⚙️ Workflows Disponíveis
 
-Executado automaticamente em:
-- Push para branches `main` e `develop`
-- Pull requests para `main` e `develop`
-
-**Jobs incluídos:**
-
-#### Lint e Type Check
-- Verifica tipagem TypeScript
-- Valida código com ESLint (se configurado)
-
-#### Testes Unitários
-- Executa todos os testes unitários com Vitest
-- Gera relatório de cobertura de código
-- Faz upload do relatório como artefato
-
-#### Testes E2E
-- Executa testes end-to-end com Cypress
-- Captura screenshots em caso de falha
-- Grava vídeos de todos os testes
-- Faz upload de screenshots e vídeos como artefatos
-
-#### Build
-- Compila o projeto para produção
-- Valida que o build está funcionando
-- Faz upload do build como artefato
-
-#### Análise de Segurança
-- Executa `npm audit` para verificar vulnerabilidades
-- Alerta sobre dependências com problemas de segurança
-
-#### Deploy Preview
-- Executado apenas em Pull Requests
-- Comenta no PR com informações do preview
-
-### 2. Deploy Produção (`deploy.yml`)
+### 1. **CI/CD Pipeline** (`ci.yml`)
 
 Executado automaticamente em:
-- Push para branch `main`
-- Criação de tags com padrão `v*` (ex: v1.0.0)
+- Push para as branches `master` e `develop`
+- Pull requests abertos para `master` e `develop`
 
-**Jobs incluídos:**
+#### 🔍 **Jobs incluídos**
 
-#### Deploy
-- Faz build otimizado para produção
-- Cria release notes automaticamente para tags
-- Deploy para ambiente de produção
+##### 🧹 Lint e Type Check
+- Executa `npx nuxi typecheck` para validação de tipos TypeScript.
+- Valida código com ESLint (se configurado).
+- Continua mesmo em caso de erro de tipagem para não bloquear o fluxo.
 
-## Artefatos Gerados
+##### 🧪 Testes Unitários
+- Executa testes unitários com **Vitest**.
+- Gera relatório de **cobertura de código**.
+- Faz upload automático do artefato `coverage-report` com retenção de **30 dias**.
 
-Os workflows geram os seguintes artefatos:
+##### 🌐 Testes E2E (Cypress)
+- Executa testes end-to-end simulando o comportamento real do usuário.
+- Em caso de falha:
+  - Faz upload de **screenshots** (`cypress-screenshots`).
+  - Faz upload de **vídeos** (`cypress-videos`) de todos os testes (retidos por 7 dias).
+- Garante observabilidade total durante o pipeline.
 
-- **coverage-report**: Relatório de cobertura de testes (30 dias)
-- **cypress-screenshots**: Screenshots de testes E2E que falharam (7 dias)
-- **cypress-videos**: Vídeos de todos os testes E2E (7 dias)
-- **nuxt-build**: Build compilado do projeto (7 dias)
+##### 🏗️ Build
+- Compila o projeto Nuxt 3 em modo produção (`nuxt build`).
+- Gera saída otimizada no diretório `.output` (preset **node-server**).
+- Faz upload do build como artefato `nuxt-build` (retenção de **7 dias**).
+- Usa `if-no-files-found: error` para evitar upload de pastas vazias.
 
-## Badges para README
+##### 🔒 Análise de Segurança
+- Executa `npm audit --audit-level=moderate`.
+- Identifica vulnerabilidades conhecidas nas dependências do projeto.
+- Não falha o pipeline — apenas emite alerta.
 
-Adicione estes badges ao README.md principal:
-
-```markdown
-![CI Status](https://github.com/seu-usuario/hotel-booking/workflows/CI%2FCD%20Pipeline/badge.svg)
-![Deploy Status](https://github.com/seu-usuario/hotel-booking/workflows/Deploy%20Produção/badge.svg)
-```
-
-## Configuração Necessária
-
-### Secrets do GitHub
-
-Para deploy em produção, configure os seguintes secrets no repositório:
-
-- `DEPLOY_TOKEN`: Token de autenticação do provedor de hospedagem
-- Outros secrets específicos do seu provedor
-
-### Environments
-
-Configure o environment `production` nas configurações do repositório para:
-- Adicionar proteções de deploy
-- Configurar reviewers obrigatórios
-- Adicionar secrets específicos de produção
-
-## Executar Localmente
-
-Para testar os comandos do CI localmente:
-
-```bash
-# Type check
-npx nuxi typecheck
-
-# Testes unitários
-npm run test:run
-
-# Testes com cobertura
-npm run test:coverage
-
-# Testes E2E
-npm run test:e2e
-
-# Build
-npm run build
-```
-
-## Melhorias Futuras
-
-- [ ] Adicionar cache de dependências do Cypress
-- [ ] Implementar deploy automático para staging
-- [ ] Adicionar notificações no Slack/Discord
-- [ ] Implementar rollback automático em caso de falha
-- [ ] Adicionar análise de performance (Lighthouse CI)
-
+##### 🚀 Deploy Preview
+- Executado **apenas em Pull Requests**.
+- Baixa o artefato do build (`nuxt-build`).
+- Exibe listagem de `.output` e versão do Node para debug.
+- (Por enquanto) cria comentário automático no PR informando que o build foi concluído com sucesso:

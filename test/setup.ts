@@ -1,4 +1,3 @@
-// test/setup.ts
 import { vi, afterEach } from "vitest";
 import { config } from "@vue/test-utils";
 import {
