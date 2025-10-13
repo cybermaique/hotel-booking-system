@@ -7,6 +7,8 @@ interface Notification {
   persistent?: boolean;
 }
 
+const notifications = ref<Notification[]>([]);
+
 /**
  * Composable para gerenciar notificações toast da aplicação.
  *
@@ -16,15 +18,12 @@ interface Notification {
  * @returns Objeto com lista de notificações e funções para manipulá-las
  *
  * Detalhes:
- * - Cada instância tem seu próprio estado (evita vazamento entre testes/componentes)
+ * - Estado global compartilhado entre todas as instâncias (singleton)
  * - Erros são persistentes por padrão (fechamento manual)
  * - Outras notificações desaparecem automaticamente após 5s
  * - IDs são gerados com timestamp + random (baixa chance de colisão)
  */
 export const useNotifications = () => {
-  // Estado reativo independente por instância
-  const notifications = ref<Notification[]>([]);
-
   /**
    * Adiciona uma nova notificação à lista.
    */
@@ -40,7 +39,6 @@ export const useNotifications = () => {
 
     notifications.value.push(newNotification);
 
-    // Remove automaticamente se não for persistente e tiver duração
     if (!newNotification.persistent && newNotification.duration) {
       setTimeout(() => {
         removeNotification(id);
@@ -50,9 +48,6 @@ export const useNotifications = () => {
     return id;
   };
 
-  /**
-   * Remove notificação pelo ID.
-   */
   const removeNotification = (id: string) => {
     const index = notifications.value.findIndex((n) => n.id === id);
     if (index > -1) {
@@ -60,16 +55,10 @@ export const useNotifications = () => {
     }
   };
 
-  /**
-   * Remove todas as notificações.
-   */
   const clearAll = () => {
     notifications.value = [];
   };
 
-  /**
-   * Exibe notificação de sucesso (auto-dismiss em 5s).
-   */
   const success = (
     title: string,
     message?: string,
@@ -83,9 +72,6 @@ export const useNotifications = () => {
     });
   };
 
-  /**
-   * Exibe notificação de erro (persistente por padrão).
-   */
   const error = (
     title: string,
     message?: string,
@@ -95,14 +81,11 @@ export const useNotifications = () => {
       type: "error",
       title,
       message,
-      persistent: options?.persistent ?? true, // Erros são persistentes por padrão
+      persistent: options?.persistent ?? true,
       ...options,
     });
   };
 
-  /**
-   * Exibe notificação de aviso (auto-dismiss em 5s).
-   */
   const warning = (
     title: string,
     message?: string,
@@ -116,9 +99,6 @@ export const useNotifications = () => {
     });
   };
 
-  /**
-   * Exibe notificação informativa (auto-dismiss em 5s).
-   */
   const info = (
     title: string,
     message?: string,
@@ -132,9 +112,6 @@ export const useNotifications = () => {
     });
   };
 
-  /**
-   * Exibe notificação de loading persistente (manual).
-   */
   const loading = (title: string, message?: string) => {
     return addNotification({
       type: "info",
