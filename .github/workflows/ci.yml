@@ -2,176 +2,111 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
 
 jobs:
-  # Job 1: Linting e Verificação de Código
   lint:
-    name: Lint e Type Check
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Type Check (TypeScript)
-        run: npx nuxi typecheck
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx nuxi typecheck
         continue-on-error: true
 
-  # Job 2: Testes Unitários
   test:
-    name: Testes Unitários
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Executar testes unitários
-        run: npm run test:run
-      
-      - name: Gerar relatório de cobertura
-        run: npm run test:coverage
-        continue-on-error: true
-      
-      - name: Upload relatório de cobertura
-        uses: actions/upload-artifact@v4
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run test:run
+      - run: npm run test:coverage || true
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
           path: coverage/
           retention-days: 30
 
-  # Job 3: Testes E2E (Cypress)
   e2e:
-    name: Testes E2E
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Executar testes E2E
-        run: npm run test:e2e
-        continue-on-error: true
-      
-      - name: Upload screenshots de falhas
-        uses: actions/upload-artifact@v4
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run test:e2e || true
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-screenshots
           path: cypress/screenshots/
           retention-days: 7
-      
-      - name: Upload vídeos dos testes
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: cypress-videos
           path: cypress/videos/
           retention-days: 7
 
-  # Job 4: Build do Projeto
   build:
-    name: Build Produção
     runs-on: ubuntu-latest
     needs: [lint, test]
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Build do projeto
-        run: npm run build
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run build
         env:
           NODE_ENV: production
-      
-      - name: Upload artefato de build
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: nuxt-build
           path: .output/
           retention-days: 7
 
-  # Job 5: Análise de Segurança
   security:
-    name: Análise de Segurança
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Audit de dependências
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=moderate || true
 
-  # Job 6: Deploy Preview (apenas para PRs)
   deploy-preview:
-    name: Deploy Preview
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'pull_request'
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Download artefato de build
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: nuxt-build
           path: .output/
-      
-      - name: Comentar PR com link de preview
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.createComment({
@@ -180,4 +115,3 @@ jobs:
               repo: context.repo.repo,
               body: '🚀 Preview build disponível! O deploy foi realizado com sucesso.'
             })
-

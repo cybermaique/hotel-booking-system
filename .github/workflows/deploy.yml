@@ -2,39 +2,30 @@ name: Deploy Produção
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     tags:
       - 'v*'
 
 jobs:
   deploy:
-    name: Deploy para Produção
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://hotelbooking.com
-    
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Build do projeto
-        run: npm run build
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run build
         env:
           NODE_ENV: production
           NUXT_PUBLIC_BASE_URL: https://hotelbooking.com
-      
-      - name: Criar release notes
-        if: startsWith(github.ref, 'refs/tags/')
+      - if: startsWith(github.ref, 'refs/tags/')
         uses: actions/github-script@v7
         with:
           script: |
@@ -48,15 +39,7 @@ jobs:
               draft: false,
               prerelease: false
             })
-      
-      # Aqui você pode adicionar steps específicos para seu provedor de hospedagem
-      # Exemplos: Vercel, Netlify, AWS, etc.
-      
-      - name: Notificar sucesso
+      - run: echo "✅ Deploy realizado com sucesso!"
         if: success()
-        run: echo "✅ Deploy realizado com sucesso!"
-      
-      - name: Notificar falha
+      - run: echo "❌ Deploy falhou!"
         if: failure()
-        run: echo "❌ Deploy falhou!"
-
