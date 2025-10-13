@@ -6,6 +6,14 @@
 
 Este projeto foi desenvolvido como parte de um teste prático de desenvolvimento frontend, com foco em demonstrar proficiência em tecnologias modernas e melhores práticas de desenvolvimento web. O desafio consistia em criar uma aplicação funcional de reserva de hotéis utilizando **Nuxt 3**, **TypeScript**, **Tailwind CSS** e **Pinia**, com ênfase em qualidade de código, testes automatizados e acessibilidade.
 
+### Screenshots
+<img width="1920" height="1068" alt="screencapture-localhost-3001-login-2025-10-13-14_15_53" src="https://github.com/user-attachments/assets/ebcd8b18-eb31-4512-8270-48987a78fc58" />
+<img width="1920" height="3632" alt="screencapture-localhost-3001-2025-10-13-14_15_32" src="https://github.com/user-attachments/assets/0c1d913a-67ee-4fec-8a7c-f488bcc32b8d" />
+<img width="1920" height="1247" alt="screencapture-localhost-3001-register-2025-10-13-14_16_03" src="https://github.com/user-attachments/assets/758e9146-74ea-4ac2-916e-349a3189a9f9" />
+<img width="1920" height="2827" alt="screencapture-localhost-3001-hotels-2025-10-13-14_16_13" src="https://github.com/user-attachments/assets/026cb8f2-b521-4e94-ae1f-1a86f4d1eff4" />
+<img width="1920" height="1558" alt="screencapture-localhost-3001-hotels-5-2025-10-13-14_16_35" src="https://github.com/user-attachments/assets/9999ec98-78c8-4a6e-acf3-ede4be6f8e68" />
+<img width="1920" height="1957" alt="screencapture-localhost-3001-confirmation-2025-10-13-14_18_05" src="https://github.com/user-attachments/assets/ae6e319b-57a7-4142-a309-bf9eccb9157c" />
+
 ### Objetivos Cumpridos
 
 - ✅ Implementar sistema completo de pesquisa, comparação e reserva de hotéis
