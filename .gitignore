@@ -7,7 +7,7 @@ pnpm-debug.log*
 
 # Nuxt
 .nuxt/
-output/
+.output/
 dist/
 .cache/
 *.log
