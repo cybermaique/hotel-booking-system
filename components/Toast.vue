@@ -1,17 +1,14 @@
 <template>
     <Teleport to="body">
-        <!-- Bate com os seletores dos testes: .fixed.top-4.right-4 e .z-50 -->
-        <div class="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full pointer-events-none">
+        <div class="fixed top-4 right-4 z-[99999] space-y-2 max-w-sm w-full pointer-events-none">
             <TransitionGroup name="toast">
                 <div v-for="notification in notifications" :key="notification.id"
                     :class="toastClasses(notification.type)" class="pointer-events-auto">
                     <div class="flex items-start">
-                        <!-- Icon -->
                         <div class="flex-shrink-0">
                             <component :is="getIcon(notification.type)" class="w-5 h-5" />
                         </div>
 
-                        <!-- Content -->
                         <div class="ml-3 flex-1">
                             <p class="text-sm font-semibold">{{ notification.title }}</p>
                             <p v-if="notification.message" class="mt-1 text-sm opacity-90">
@@ -19,7 +16,6 @@
                             </p>
                         </div>
 
-                        <!-- Close button -->
                         <button @click="removeNotification(notification.id)"
                             class="ml-4 flex-shrink-0 inline-flex text-current opacity-70 hover:opacity-100 transition-opacity">
                             <span class="sr-only">Fechar</span>
@@ -30,8 +26,6 @@
                         </button>
                     </div>
 
-                    <!-- Progress bar (auto-dismiss) -->
-                    <!-- Só renderiza se NÃO for persistente E existir duration -->
                     <div v-if="!notification.persistent && notification.duration"
                         class="mt-2 h-1 bg-current opacity-30 rounded-full overflow-hidden">
                         <div class="h-full bg-current opacity-50 animate-progress"

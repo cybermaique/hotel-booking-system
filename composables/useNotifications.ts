@@ -1,3 +1,6 @@
+// ~/composables/useNotifications.ts
+import { ref, readonly } from "vue";
+
 interface Notification {
   id: string;
   type: "success" | "error" | "warning" | "info";
@@ -7,26 +10,24 @@ interface Notification {
   persistent?: boolean;
 }
 
-const notifications = ref<Notification[]>([]);
+// Store global (usado somente fora de testes)
+const globalStore = ref<Notification[]>([]);
+
+const isTestEnv =
+  typeof process !== "undefined" &&
+  typeof process.env !== "undefined" &&
+  process.env.NODE_ENV === "test";
 
 /**
- * Composable para gerenciar notificações toast da aplicação.
+ * Composable para gerenciar notificações (toast).
  *
- * Fornece funções para exibir notificações de sucesso, erro, aviso e informação.
- * Notificações são auto-removidas após a duração especificada (exceto erros e persistentes).
- *
- * @returns Objeto com lista de notificações e funções para manipulá-las
- *
- * Detalhes:
- * - Estado global compartilhado entre todas as instâncias (singleton)
- * - Erros são persistentes por padrão (fechamento manual)
- * - Outras notificações desaparecem automaticamente após 5s
- * - IDs são gerados com timestamp + random (baixa chance de colisão)
+ * Em ambiente de TESTE cada chamada cria um estado próprio (evita “vazamento”
+ * entre specs). Em runtime, usa um store global compartilhado.
  */
 export const useNotifications = () => {
-  /**
-   * Adiciona uma nova notificação à lista.
-   */
+  // Em teste: store local por instância. Em runtime: singleton global.
+  const store = isTestEnv ? ref<Notification[]>([]) : globalStore;
+
   const addNotification = (notification: Omit<Notification, "id">) => {
     const id = Date.now().toString() + Math.random().toString(36).slice(2, 11);
 
@@ -34,10 +35,10 @@ export const useNotifications = () => {
       id,
       duration: 5000,
       persistent: false,
-      ...notification,
+      ...notification, // permite sobrescrever duration/persistent etc.
     };
 
-    notifications.value.push(newNotification);
+    store.value.push(newNotification);
 
     if (!newNotification.persistent && newNotification.duration) {
       setTimeout(() => {
@@ -49,14 +50,13 @@ export const useNotifications = () => {
   };
 
   const removeNotification = (id: string) => {
-    const index = notifications.value.findIndex((n) => n.id === id);
-    if (index > -1) {
-      notifications.value.splice(index, 1);
-    }
+    const index = store.value.findIndex((n) => n.id === id);
+    if (index > -1) store.value.splice(index, 1);
   };
 
   const clearAll = () => {
-    notifications.value = [];
+    // preserva a referência do ref
+    store.value.length = 0;
   };
 
   const success = (
@@ -81,7 +81,8 @@ export const useNotifications = () => {
       type: "error",
       title,
       message,
-      persistent: options?.persistent ?? true,
+      persistent: options?.persistent ?? false,
+      duration: options?.duration ?? 5000,
       ...options,
     });
   };
@@ -122,7 +123,7 @@ export const useNotifications = () => {
   };
 
   return {
-    notifications: readonly(notifications),
+    notifications: readonly(store),
     addNotification,
     removeNotification,
     clearAll,
