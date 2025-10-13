@@ -11,25 +11,26 @@ interface Notification {
  * Composable para gerenciar notificações toast da aplicação.
  *
  * Fornece funções para exibir notificações de sucesso, erro, aviso e informação.
- * Notificações são auto-removidas após duração especificada (exceto erros).
+ * Notificações são auto-removidas após a duração especificada (exceto erros e persistentes).
  *
  * @returns Objeto com lista de notificações e funções para manipulá-las
  *
- * Side-effects:
- * - Usa setTimeout para auto-remover notificações não persistentes
- * - Mantém estado reativo global de notificações
- *
- * Trade-offs:
- * - Erros são persistentes por padrão (requerem ação do usuário para fechar)
+ * Detalhes:
+ * - Cada instância tem seu próprio estado (evita vazamento entre testes/componentes)
+ * - Erros são persistentes por padrão (fechamento manual)
  * - Outras notificações desaparecem automaticamente após 5s
- * - IDs gerados com timestamp + random (colisão improvável mas possível)
+ * - IDs são gerados com timestamp + random (baixa chance de colisão)
  */
-// Estado global compartilhado entre todas as instâncias
-const globalNotifications = ref<Notification[]>([]);
-
 export const useNotifications = () => {
+  // Estado reativo independente por instância
+  const notifications = ref<Notification[]>([]);
+
+  /**
+   * Adiciona uma nova notificação à lista.
+   */
   const addNotification = (notification: Omit<Notification, "id">) => {
-    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const id = Date.now().toString() + Math.random().toString(36).slice(2, 11);
+
     const newNotification: Notification = {
       id,
       duration: 5000,
@@ -37,8 +38,9 @@ export const useNotifications = () => {
       ...notification,
     };
 
-    globalNotifications.value.push(newNotification);
+    notifications.value.push(newNotification);
 
+    // Remove automaticamente se não for persistente e tiver duração
     if (!newNotification.persistent && newNotification.duration) {
       setTimeout(() => {
         removeNotification(id);
@@ -48,17 +50,26 @@ export const useNotifications = () => {
     return id;
   };
 
+  /**
+   * Remove notificação pelo ID.
+   */
   const removeNotification = (id: string) => {
-    const index = globalNotifications.value.findIndex((n) => n.id === id);
+    const index = notifications.value.findIndex((n) => n.id === id);
     if (index > -1) {
-      globalNotifications.value.splice(index, 1);
+      notifications.value.splice(index, 1);
     }
   };
 
+  /**
+   * Remove todas as notificações.
+   */
   const clearAll = () => {
-    globalNotifications.value = [];
+    notifications.value = [];
   };
 
+  /**
+   * Exibe notificação de sucesso (auto-dismiss em 5s).
+   */
   const success = (
     title: string,
     message?: string,
@@ -73,8 +84,7 @@ export const useNotifications = () => {
   };
 
   /**
-   * Exibe notificação de erro.
-   * Por padrão é persistente - requer fechamento manual pelo usuário.
+   * Exibe notificação de erro (persistente por padrão).
    */
   const error = (
     title: string,
@@ -85,11 +95,14 @@ export const useNotifications = () => {
       type: "error",
       title,
       message,
-      persistent: options?.persistent ?? false,
+      persistent: options?.persistent ?? true, // Erros são persistentes por padrão
       ...options,
     });
   };
 
+  /**
+   * Exibe notificação de aviso (auto-dismiss em 5s).
+   */
   const warning = (
     title: string,
     message?: string,
@@ -103,6 +116,9 @@ export const useNotifications = () => {
     });
   };
 
+  /**
+   * Exibe notificação informativa (auto-dismiss em 5s).
+   */
   const info = (
     title: string,
     message?: string,
@@ -117,8 +133,7 @@ export const useNotifications = () => {
   };
 
   /**
-   * Exibe notificação de loading persistente.
-   * Deve ser removida manualmente quando a operação terminar.
+   * Exibe notificação de loading persistente (manual).
    */
   const loading = (title: string, message?: string) => {
     return addNotification({
@@ -130,7 +145,7 @@ export const useNotifications = () => {
   };
 
   return {
-    notifications: readonly(globalNotifications),
+    notifications: readonly(notifications),
     addNotification,
     removeNotification,
     clearAll,
