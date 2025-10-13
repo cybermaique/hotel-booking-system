@@ -27,7 +27,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
-      # Typecheck do Nuxt; não falha o pipeline se não houver tipos perfeitos
       - run: npx nuxi typecheck
         continue-on-error: true
 
@@ -90,8 +89,6 @@ jobs:
 
       - run: npm ci
 
-      # Se o projeto for SSR, "npm run build" cria .output/
-      # Se for SSG, considere trocar por "npm run generate".
       - name: Build Nuxt
         run: |
           npm run build
@@ -103,7 +100,6 @@ jobs:
         env:
           NODE_ENV: production
 
-      # Upload condicional — cobre SSR (.output), SSG (.output/public) e fallback dist/
       - name: Upload .output (SSR)
         if: ${{ hashFiles('.output/**') != '' }}
         uses: actions/upload-artifact@v4
@@ -151,7 +147,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Baixa todos os artefatos que existirem e mescla em um diretório único
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -163,7 +158,6 @@ jobs:
           find artifacts -maxdepth 2 -type d -print
           node -v
 
-      # Comentário no PR (placeholder; ajuste mensagem/URL do preview real)
       - uses: actions/github-script@v7
         with:
           script: |
