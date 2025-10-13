@@ -2,17 +2,15 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [master, develop]
   pull_request:
-    branches: [ master, develop ]
+    branches: [master, develop]
 
-# Permissões (ler artifacts + comentar no PR)
 permissions:
   contents: read
   actions: read
   pull-requests: write
 
-# (Opcional) cancela execuções antigas da mesma branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -25,8 +23,8 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx nuxi typecheck
@@ -38,8 +36,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run test:run
@@ -57,8 +55,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run test:e2e || true
@@ -77,13 +75,13 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test] # ou [lint, test, e2e] se quiser gatear pelo e2e
+    needs: [lint, test]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build
@@ -94,6 +92,7 @@ jobs:
         with:
           name: nuxt-build
           path: .output
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 
@@ -103,8 +102,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm audit --audit-level=moderate || true
@@ -120,9 +119,9 @@ jobs:
         with:
           name: nuxt-build
           path: .output
-      - run: ls -la .output && node -v  # debug opcional
+      - run: ls -la .output && node -v
 
-      # TODO: substitua pelo passo real de deploy (Railway/Render/Fly/etc.)
+      # TODO:
       - uses: actions/github-script@v7
         with:
           script: |
