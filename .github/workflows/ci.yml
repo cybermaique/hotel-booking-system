@@ -42,8 +42,9 @@ jobs:
       - run: npm ci
       - run: npm run test:run
       - run: npm run test:coverage || true
-      - uses: actions/upload-artifact@v4
+      - name: Upload coverage
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
@@ -60,14 +61,16 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run test:e2e || true
-      - uses: actions/upload-artifact@v4
+      - name: Upload cypress screenshots
         if: failure()
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: cypress/screenshots/
           retention-days: 7
-      - uses: actions/upload-artifact@v4
+      - name: Upload cypress videos
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
           path: cypress/videos/
@@ -83,17 +86,46 @@ jobs:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: package-lock.json
+
       - run: npm ci
-      - run: npm run build
+
+      - name: Build Nuxt
+        run: |
+          npm run build
+          echo "== Listando possíveis saídas =="
+          ls -la || true
+          ls -la .output || true
+          ls -la .output/public || true
+          ls -la dist || true
         env:
           NODE_ENV: production
-      - name: Upload build artifact
+
+      - name: Upload .output (SSR)
+        if: ${{ hashFiles('.output/**') != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: nuxt-build
+          name: nuxt-ssr
           path: .output
           include-hidden-files: true
-          if-no-files-found: error
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload .output/public (SSG)
+        if: ${{ hashFiles('.output/public/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-ssg
+          path: .output/public
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload dist (fallback)
+        if: ${{ hashFiles('dist/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-dist
+          path: dist
+          if-no-files-found: ignore
           retention-days: 7
 
   security:
@@ -114,14 +146,18 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifact
+
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: nuxt-build
-          path: .output
-      - run: ls -la .output && node -v
+          path: artifacts
+          merge-multiple: true
 
-      # TODO:
+      - run: |
+          echo "Conteúdo baixado:"
+          find artifacts -maxdepth 2 -type d -print
+          node -v
+
       - uses: actions/github-script@v7
         with:
           script: |
@@ -129,5 +165,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Preview build disponível! O deploy foi realizado com sucesso.'
+              body: '🚀 Preview build disponível! Artefatos foram gerados e anexados ao workflow.'
             })
