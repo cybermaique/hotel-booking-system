@@ -2,6 +2,16 @@
 
 > 🎯 **Projeto de Desafio Técnico** - Sistema completo de reserva de hotéis desenvolvido como resposta a um desafio de desenvolvimento frontend sênior.
 
+---
+
+## 🌐 Acesso ao Projeto
+
+Acesse a versão hospedada na Vercel clicando no link abaixo:
+
+👉 **[https://hotel-booking-system-ruby.vercel.app/](https://hotel-booking-system-ruby.vercel.app/)**
+
+---
+
 ## 📋 Sobre o Desafio
 
 Este projeto foi desenvolvido como parte de um teste prático de desenvolvimento frontend, com foco em demonstrar proficiência em tecnologias modernas e melhores práticas de desenvolvimento web. O desafio consistia em criar uma aplicação funcional de reserva de hotéis utilizando **Nuxt 3**, **TypeScript**, **Tailwind CSS** e **Pinia**, com ênfase em qualidade de código, testes automatizados e acessibilidade.
