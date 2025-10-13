@@ -4,11 +4,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
 
 # Nuxt
 .nuxt/
-output/
+.output/
 dist/
 .cache/
 *.log
