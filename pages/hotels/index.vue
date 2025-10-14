@@ -2,9 +2,10 @@
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Header Section -->
     <div class="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40">
-      <div class="container mx-auto px-4 py-6">
+      <div class="container mx-auto px-4" :class="isBareHotels ? 'py-3' : 'py-6'">
         <div class="flex items-center justify-between">
-          <div class="flex items-center">
+          <!-- Mostrar título/subtítulo apenas quando houver parâmetros -->
+          <div class="flex items-center" v-if="!isBareHotels">
             <div>
               <h1 class="text-2xl md:text-3xl font-display font-bold text-gray-900">
                 Hotéis em {{ searchParams.destination }}
@@ -16,7 +17,8 @@
             </div>
           </div>
 
-          <div v-if="selectedHotels.length >= 2" class="hidden md:block">
+          <!-- Botão comparar continua visível normalmente -->
+          <div v-if="selectedHotels.length >= 2" class="hidden md:block ml-auto">
             <AtomButton variant="primary" @click="navigateToCompare"
               class="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 shadow-glow">
               Comparar ({{ selectedHotels.length }})
@@ -165,7 +167,7 @@
           <div v-else class="space-y-6">
             <div class="flex justify-between items-center">
               <p class="text-gray-600 font-medium">
-                {{ filteredHotels.length }} hotéis encontrados
+                {{ pagination?.total || 0 }} hotéis encontrados
               </p>
               <div class="hidden md:flex items-center gap-2 text-sm text-gray-500">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,6 +187,30 @@
                   class="h-full hover:scale-[1.02] transition-transform duration-300" />
               </div>
             </div>
+
+            <!-- Pagination Controls -->
+            <div v-if="pagination && pagination.totalPages > 1" class="flex justify-center items-center gap-2 mt-8">
+              <AtomButton @click="goToPage(currentPage - 1)" :disabled="currentPage === 1"
+                class="px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                Anterior
+              </AtomButton>
+
+              <div class="flex gap-2">
+                <button v-for="page in visiblePages" :key="page" @click="goToPage(page)" :class="[
+                  'px-4 py-2 rounded-lg font-medium transition-all',
+                  page === currentPage
+                    ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                ]">
+                  {{ page }}
+                </button>
+              </div>
+
+              <AtomButton @click="goToPage(currentPage + 1)" :disabled="currentPage === pagination.totalPages"
+                class="px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                Próxima
+              </AtomButton>
+            </div>
           </div>
         </div>
       </div>
@@ -201,10 +227,14 @@
 </template>
 
 <script setup lang="ts">
-import type { Hotel } from '~/types/hotel'
+import type { Hotel, PaginatedResponse } from '~/types/hotel'
 
 const route = useRoute()
+const router = useRouter()
 const { formatDate } = useFormatters()
+
+const currentPage = ref(Number(route.query.page) || 1)
+const itemsPerPage = ref(10)
 
 const searchParams = computed(() => ({
   destination: route.query.destination as string || '',
@@ -225,8 +255,8 @@ const sortOptions = [
   { value: 'distance', label: 'Mais próximo' }
 ]
 
-const selectedPriceRanges = ref<string[]>([])  // ex: ['0-150', '150-300']
-const selectedRatings = ref<number[]>([])      // ex: [5] ou [4, 3]
+const selectedPriceRanges = ref<string[]>([])
+const selectedRatings = ref<number[]>([])
 
 // Helpers para preço
 const priceInRange = (price: number, range: string) => {
@@ -243,7 +273,6 @@ const filteredHotels = computed(() => {
   const list = hotels.value || []
 
   return list.filter((h) => {
-    // Ajuste aqui se seu campo de preço tiver outro nome:
     const price = Number((h as any).pricePerNight)
     const rating = Number((h as any).rating)
 
@@ -254,7 +283,6 @@ const filteredHotels = computed(() => {
         : selectedPriceRanges.value.some((r) => priceInRange(price, r))
 
     // --- filtro de estrelas ---
-    // combinações: 5 (somente 5), 4+ (>=4), 3+ (>=3)
     const passRating =
       selectedRatings.value.length === 0
         ? true
@@ -268,15 +296,64 @@ const filteredHotels = computed(() => {
   })
 })
 
-const { data: hotels, pending, error, refresh } = await useLazyFetch<Hotel[]>('/api/hotels', {
+const { data: response, pending, error, refresh } = await useLazyFetch<PaginatedResponse<Hotel>>('/api/hotels', {
   query: computed(() => ({
     ...searchParams.value,
-    sort: sortBy.value
+    sort: sortBy.value,
+    page: currentPage.value,
+    limit: itemsPerPage.value
   })),
-  default: () => []
+  default: () => ({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }),
+  watch: [currentPage, sortBy]
 })
 
+const hotels = computed(() => response.value?.data || [])
+const pagination = computed(() => response.value?.pagination)
+
+// Calcular páginas visíveis para paginação
+const visiblePages = computed(() => {
+  if (!pagination.value) return []
+
+  const total = pagination.value.totalPages
+  const current = currentPage.value
+  const pages: number[] = []
+
+  // Mostrar no máximo 5 páginas
+  let start = Math.max(1, current - 2)
+  let end = Math.min(total, start + 4)
+
+  // Ajustar se estiver no final
+  if (end - start < 4) {
+    start = Math.max(1, end - 4)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+
+  return pages
+})
+
+const goToPage = (page: number) => {
+  if (!pagination.value) return
+  if (page < 1 || page > pagination.value.totalPages) return
+
+  currentPage.value = page
+
+  // Atualizar URL
+  router.push({
+    query: {
+      ...route.query,
+      page: page.toString()
+    }
+  })
+
+  // Scroll para o topo
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 const handleSort = () => {
+  currentPage.value = 1
   refresh()
 }
 
@@ -317,7 +394,6 @@ const toggleCompare = (hotelId: string, wantSelect: boolean) => {
   }
 }
 
-
 const navigateToCompare = () => {
   if (selectedHotels.value.length < 2) return
   navigateTo({
@@ -329,6 +405,17 @@ const navigateToCompare = () => {
 const viewHotelDetails = (hotelId: string) => {
   navigateTo(`/hotels/${hotelId}`)
 }
+
+const isBareHotels = computed(() => {
+  return Object.keys(route.query || {}).length === 0
+})
+
+watch(() => route.query.page, (newPage) => {
+  const page = Number(newPage) || 1
+  if (page !== currentPage.value) {
+    currentPage.value = page
+  }
+})
 
 useHead({
   title: `Hotéis em ${searchParams.value.destination} - Hotel Booking`,
