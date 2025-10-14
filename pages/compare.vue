@@ -63,22 +63,20 @@
 </template>
 
 <script setup lang="ts">
-import type { Hotel } from '~/types/hotel'
-
-
+import type { Hotel, PaginatedResponse } from '~/types/hotel'
 
 const route = useRoute()
 const hotelIds = (route.query.hotels as string)?.split(',') || []
 
-const { data: hotels, pending, error } = await useLazyFetch<Hotel[]>('/api/hotels', {
+const { data: response, pending, error } = await useLazyFetch<PaginatedResponse<Hotel>>('/api/hotels', {
   query: { ids: hotelIds.join(',') },
-  default: () => []
+  default: () => ({ data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } })
 })
+
+const hotels = computed(() => response.value?.data ?? [])
 
 useHead({
   title: 'Comparar Hotéis - Hotel Booking',
-  meta: [
-    { name: 'description', content: 'Compare características, preços e comodidades dos hotéis selecionados lado a lado.' }
-  ]
+  meta: [{ name: 'description', content: 'Compare características, preços e comodidades dos hotéis selecionados lado a lado.' }]
 })
 </script>
