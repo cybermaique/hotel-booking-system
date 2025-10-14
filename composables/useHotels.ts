@@ -1,17 +1,17 @@
 import { $fetch } from "ofetch";
-import type { Hotel, SearchParams } from "~/types/hotel";
+import type { Hotel, PaginatedResponse, SearchParams } from "~/types/hotel";
 
 /**
  * Composable para operações relacionadas a hotéis.
- * 
+ *
  * Fornece funções para buscar, filtrar e ordenar hotéis da API mock.
- * 
+ *
  * @returns Objeto com funções para manipular dados de hotéis
- * 
+ *
  * Side-effects:
  * - Faz requisições HTTP para /api/hotels
  * - Loga erros no console em caso de falha nas requisições
- * 
+ *
  * Trade-offs:
  * - getHotelById retorna null em caso de erro (fail-safe para UX)
  * - getHotelsByIds retorna array vazio em caso de erro (fail-safe)
@@ -19,15 +19,17 @@ import type { Hotel, SearchParams } from "~/types/hotel";
  */
 export const useHotels = () => {
   /**
-   * Busca hotéis com parâmetros de pesquisa.
+   * Busca hotéis com parâmetros de pesquisa e paginação.
    * @throws Propaga erros da API para tratamento no componente
    */
-  const searchHotels = async (params: SearchParams): Promise<Hotel[]> => {
+  const searchHotels = async (
+    params: SearchParams & { page?: number; limit?: number }
+  ): Promise<PaginatedResponse<Hotel>> => {
     try {
-      const hotels = await $fetch<Hotel[]>("/api/hotels", {
+      const response = await $fetch<PaginatedResponse<Hotel>>("/api/hotels", {
         query: params,
       });
-      return hotels;
+      return response;
     } catch (error) {
       console.error("Erro ao buscar hotéis:", error);
       throw error;
@@ -54,10 +56,15 @@ export const useHotels = () => {
    */
   const getHotelsByIds = async (ids: string[]): Promise<Hotel[]> => {
     try {
-      const hotels = await $fetch<Hotel[]>("/api/hotels", {
-        query: { ids: ids.join(",") },
-      });
-      return hotels;
+      const res = await $fetch<Hotel[] | PaginatedResponse<Hotel>>(
+        "/api/hotels",
+        {
+          query: { ids: ids.join(",") },
+        }
+      );
+
+      const data = Array.isArray(res) ? res : res?.data;
+      return data ?? [];
     } catch (error) {
       console.error("Erro ao buscar hotéis por IDs:", error);
       return [];
@@ -125,4 +132,3 @@ export const useHotels = () => {
     sortHotels,
   };
 };
-
