@@ -4,6 +4,7 @@ import type { ReservationPayload, ReservationResponse } from "~/types/hotel";
 export const useReservation = () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
+  const { isTodayOrFuture, isAfter, diffInDays } = useDateUtils();
 
   const createReservation = async (
     payload: ReservationPayload
@@ -59,16 +60,12 @@ export const useReservation = () => {
     }
 
     if (data.checkIn && data.checkOut) {
-      const checkInDate = new Date(data.checkIn);
-      const checkOutDate = new Date(data.checkOut);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (checkInDate < today) {
+      // Usa dayjs para validação correta de datas no fuso local
+      if (!isTodayOrFuture(data.checkIn)) {
         errors.push("Data de check-in deve ser hoje ou no futuro");
       }
 
-      if (checkOutDate <= checkInDate) {
+      if (!isAfter(data.checkOut, data.checkIn)) {
         errors.push("Data de check-out deve ser após o check-in");
       }
     }
@@ -109,11 +106,8 @@ export const useReservation = () => {
     checkOut: string,
     rooms: number
   ): number => {
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    const nights = Math.ceil(
-      (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    // Usa dayjs para cálculo correto de diferença de dias
+    const nights = diffInDays(checkIn, checkOut);
     return pricePerNight * nights * rooms;
   };
 
@@ -133,3 +127,4 @@ export const useReservation = () => {
     error: readonly(error),
   };
 };
+

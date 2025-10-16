@@ -20,9 +20,10 @@ Este projeto foi desenvolvido como parte de um teste prático de desenvolvimento
 <img width="1920" height="1068" alt="screencapture-localhost-3001-login-2025-10-13-14_15_53" src="https://github.com/user-attachments/assets/ebcd8b18-eb31-4512-8270-48987a78fc58" />
 <img width="1920" height="3632" alt="screencapture-localhost-3001-2025-10-13-14_15_32" src="https://github.com/user-attachments/assets/0c1d913a-67ee-4fec-8a7c-f488bcc32b8d" />
 <img width="1920" height="1247" alt="screencapture-localhost-3001-register-2025-10-13-14_16_03" src="https://github.com/user-attachments/assets/758e9146-74ea-4ac2-916e-349a3189a9f9" />
-<img width="1920" height="2827" alt="screencapture-localhost-3001-hotels-2025-10-13-14_16_13" src="https://github.com/user-attachments/assets/026cb8f2-b521-4e94-ae1f-1a86f4d1eff4" />
+<img width="1920" height="3427" alt="screencapture-localhost-3001-hotels-2025-10-14-00_58_02" src="https://github.com/user-attachments/assets/c12821da-6170-4dde-9ecc-4dec6fb83b7e" />
 <img width="1920" height="1558" alt="screencapture-localhost-3001-hotels-5-2025-10-13-14_16_35" src="https://github.com/user-attachments/assets/9999ec98-78c8-4a6e-acf3-ede4be6f8e68" />
 <img width="1920" height="1957" alt="screencapture-localhost-3001-confirmation-2025-10-13-14_18_05" src="https://github.com/user-attachments/assets/ae6e319b-57a7-4142-a309-bf9eccb9157c" />
+<img width="1920" height="1221" alt="screencapture-localhost-3000-compare-2025-10-14-00_08_12" src="https://github.com/user-attachments/assets/dc5d471b-7702-4ad4-95ac-3bfe8198fcc4" />
 
 ### Objetivos Cumpridos
 
@@ -72,6 +73,11 @@ Este projeto foi desenvolvido como parte de um teste prático de desenvolvimento
 - ARIA labels e roles apropriados
 - Skip links para conteúdo principal
 - Contraste adequado e foco visível
+  
+### 🔢 Paginação (Backend + Frontend)
+- Backend (Nitro): endpoints recebem page e limit e retornam { data, pagination: { page, limit, total, totalPages } }.
+- Frontend (Nuxt 3): a UI só navega entre páginas (atualiza a URL/consulta) e não fatia dados no cliente; sempre refaz a requisição com os parâmetros atuais.
+- Caso especial – comparação: /api/hotels?ids=1,2,3 retorna exatamente esses hotéis (sem paginação efetiva), para a página /compare.
 
 ---
 

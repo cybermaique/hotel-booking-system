@@ -1,27 +1,7 @@
 import { $fetch } from "ofetch";
 import type { Hotel, PaginatedResponse, SearchParams } from "~/types/hotel";
 
-/**
- * Composable para operações relacionadas a hotéis.
- *
- * Fornece funções para buscar, filtrar e ordenar hotéis da API mock.
- *
- * @returns Objeto com funções para manipular dados de hotéis
- *
- * Side-effects:
- * - Faz requisições HTTP para /api/hotels
- * - Loga erros no console em caso de falha nas requisições
- *
- * Trade-offs:
- * - getHotelById retorna null em caso de erro (fail-safe para UX)
- * - getHotelsByIds retorna array vazio em caso de erro (fail-safe)
- * - searchHotels propaga o erro (permite tratamento específico no componente)
- */
 export const useHotels = () => {
-  /**
-   * Busca hotéis com parâmetros de pesquisa e paginação.
-   * @throws Propaga erros da API para tratamento no componente
-   */
   const searchHotels = async (
     params: SearchParams & { page?: number; limit?: number }
   ): Promise<PaginatedResponse<Hotel>> => {
@@ -36,10 +16,6 @@ export const useHotels = () => {
     }
   };
 
-  /**
-   * Busca um hotel específico por ID.
-   * @returns Hotel encontrado ou null se não existir/houver erro
-   */
   const getHotelById = async (id: string): Promise<Hotel | null> => {
     try {
       const hotel = await $fetch<Hotel>(`/api/hotels/${id}`);
@@ -50,10 +26,6 @@ export const useHotels = () => {
     }
   };
 
-  /**
-   * Busca múltiplos hotéis por IDs (usado na comparação).
-   * @returns Array de hotéis encontrados ou array vazio em caso de erro
-   */
   const getHotelsByIds = async (ids: string[]): Promise<Hotel[]> => {
     try {
       const res = await $fetch<Hotel[] | PaginatedResponse<Hotel>>(
@@ -71,10 +43,6 @@ export const useHotels = () => {
     }
   };
 
-  /**
-   * Filtra hotéis client-side com múltiplos critérios.
-   * Útil para refinamento após busca inicial.
-   */
   const searchWithFilters = (
     hotels: Hotel[],
     filters: {
@@ -102,10 +70,6 @@ export const useHotels = () => {
     });
   };
 
-  /**
-   * Ordena hotéis por critério especificado.
-   * @returns Novo array ordenado (não modifica o original)
-   */
   const sortHotels = (
     hotels: Hotel[],
     sortBy: "price" | "rating" | "name"
@@ -132,3 +96,4 @@ export const useHotels = () => {
     sortHotels,
   };
 };
+

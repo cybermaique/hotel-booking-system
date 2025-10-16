@@ -10,32 +10,6 @@ interface SEOOptions {
   modifiedTime?: string
 }
 
-/**
- * Composable para gerenciar meta tags de SEO de forma centralizada.
- * 
- * Gera automaticamente meta tags para:
- * - SEO básico (title, description, keywords)
- * - Open Graph (Facebook, LinkedIn)
- * - Twitter Cards
- * - URLs canônicas
- * 
- * @param options - Configurações de SEO para a página atual
- * @returns Objeto com valores computados (title, description, image, url)
- * 
- * @example
- * ```ts
- * useSEO({
- *   title: 'Hotel Copacabana Palace',
- *   description: 'Luxuoso hotel à beira-mar...',
- *   image: '/images/hotel_1.jpg',
- *   type: 'product'
- * })
- * ```
- * 
- * Side-effects:
- * - Chama useHead() para injetar meta tags no <head>
- * - Usa useRuntimeConfig() para obter baseUrl configurada
- */
 export const useSEO = (options: SEOOptions = {}) => {
   const config = useRuntimeConfig()
   const route = useRoute()

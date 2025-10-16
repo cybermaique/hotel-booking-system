@@ -1,4 +1,8 @@
 import { defineEventHandler, readBody, createError } from "h3";
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
+dayjs.extend(isSameOrBefore);
 import type {
   ReservationPayload,
   ReservationResponse,
@@ -6,9 +10,9 @@ import type {
 
 /**
  * API endpoint para criar reservas de hotéis (mock).
- * 
+ *
  * POST /api/reserve
- * 
+ *
  * Request body: ReservationPayload
  * {
  *   hotelId: string
@@ -26,7 +30,7 @@ import type {
  *   cardName?: string (obrigatório para cartão)
  *   specialRequests?: string
  * }
- * 
+ *
  * Response: ReservationResponse
  * {
  *   success: boolean
@@ -34,12 +38,12 @@ import type {
  *   message?: string
  *   error?: string
  * }
- * 
+ *
  * Cenários de erro simulados (para testes):
  * - Email contendo "error" → 500 Internal Server Error
  * - Cartão terminando em "0000" → Falha de pagamento
  * - Dados inválidos → 400 Bad Request
- * 
+ *
  * Trade-offs:
  * - Delay artificial de 1-3s para simular processamento real
  * - Validação de cartão apenas para métodos credit_card/debit_card
@@ -83,21 +87,23 @@ export default defineEventHandler(
     if (!body.paymentMethod) errors.push("Método de pagamento é obrigatório");
 
     if (body.checkIn && body.checkOut) {
-      const checkInDate = new Date(body.checkIn);
-      const checkOutDate = new Date(body.checkOut);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const checkInDate = dayjs(body.checkIn, "YYYY-MM-DD");
+      const checkOutDate = dayjs(body.checkOut, "YYYY-MM-DD");
+      const today = dayjs().startOf("day");
 
-      if (checkInDate < today) {
+      if (checkInDate.isBefore(today)) {
         errors.push("Data de check-in deve ser hoje ou no futuro");
       }
 
-      if (checkOutDate <= checkInDate) {
+      if (checkOutDate.isSameOrBefore(checkInDate)) {
         errors.push("Data de check-out deve ser após o check-in");
       }
     }
 
-    if (body.paymentMethod === "credit_card" || body.paymentMethod === "debit_card") {
+    if (
+      body.paymentMethod === "credit_card" ||
+      body.paymentMethod === "debit_card"
+    ) {
       if (!body.cardNumber?.trim())
         errors.push("Número do cartão é obrigatório");
       if (!body.cardExpiry?.trim())
@@ -126,4 +132,3 @@ export default defineEventHandler(
     };
   }
 );
-

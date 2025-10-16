@@ -18,7 +18,6 @@ interface RegisterResponse {
   error?: string;
 }
 
-// Simulação de banco de dados em memória
 const registeredUsers: Array<{
   id: string;
   name: string;
@@ -30,10 +29,8 @@ const registeredUsers: Array<{
 export default defineEventHandler(async (event): Promise<RegisterResponse> => {
   const body = (await readBody(event)) as RegisterPayload;
 
-  // Simular delay de processamento
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  // Validações básicas
   const errors: string[] = [];
 
   if (!body.name?.trim()) errors.push("Nome é obrigatório");
@@ -42,18 +39,15 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
   if (!body.confirmPassword?.trim())
     errors.push("Confirmação de senha é obrigatória");
 
-  // Validar formato do email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (body.email && !emailRegex.test(body.email)) {
     errors.push("Email inválido");
   }
 
-  // Validar senha
   if (body.password && body.password.length < 6) {
     errors.push("Senha deve ter no mínimo 6 caracteres");
   }
 
-  // Validar confirmação de senha
   if (body.password !== body.confirmPassword) {
     errors.push("As senhas não coincidem");
   }
@@ -66,7 +60,6 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
     });
   }
 
-  // Verificar se email já está em uso
   const existingUser = registeredUsers.find((u) => u.email === body.email);
   if (existingUser) {
     throw createError({
@@ -76,7 +69,6 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
     });
   }
 
-  // Criar novo usuário
   const newUser = {
     id: Date.now().toString(),
     name: body.name,
@@ -85,10 +77,8 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
     roles: ["user"],
   };
 
-  // Adicionar ao "banco de dados"
   registeredUsers.push(newUser);
 
-  // Gerar token (mock - em produção seria JWT)
   const token = Buffer.from(
     JSON.stringify({
       userId: newUser.id,
@@ -97,16 +87,14 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
     })
   ).toString("base64");
 
-  // Configurar cookie httpOnly
   setCookie(event, "auth-token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 dias
+    maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
 
-  // Retornar dados do usuário (sem senha)
   return {
     success: true,
     user: {
@@ -117,3 +105,4 @@ export default defineEventHandler(async (event): Promise<RegisterResponse> => {
     },
   };
 });
+
