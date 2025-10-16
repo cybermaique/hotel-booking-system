@@ -12,8 +12,8 @@ const validPayload: ReservationPayload = {
   guestName: "João Silva",
   guestEmail: "joao@example.com",
   guestPhone: "11999999999",
-  checkIn: "2025-10-15",
-  checkOut: "2025-10-20",
+  checkIn: "2025-12-15",
+  checkOut: "2025-12-20",
   rooms: 1,
   guests: 2,
   paymentMethod: "credit_card",
@@ -360,4 +360,91 @@ describe("useReservation", () => {
       expect(error.value).toBeNull();
     });
   });
+
+  describe("Validação de data de check-in - Bug Fix", () => {
+    it("deve aceitar data de hoje como check-in válido", () => {
+      const { validateReservationData } = useReservation();
+
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+      const errors = validateReservationData({
+        ...validPayload,
+        checkIn: todayStr,
+        checkOut: tomorrowStr,
+      });
+
+      // Não deve haver erro relacionado a check-in no passado
+      expect(errors).not.toContain("Data de check-in deve ser hoje ou no futuro");
+      expect(errors.filter((e) => e.includes("check-in"))).toHaveLength(0);
+    });
+
+    it("deve rejeitar data de ontem como check-in", () => {
+      const { validateReservationData } = useReservation();
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+      const errors = validateReservationData({
+        ...validPayload,
+        checkIn: yesterdayStr,
+      });
+
+      expect(errors).toContain("Data de check-in deve ser hoje ou no futuro");
+    });
+
+    it("deve aceitar data futura como check-in", () => {
+      const { validateReservationData } = useReservation();
+
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      const nextWeekStr = nextWeek.toISOString().split("T")[0];
+      
+      const nextWeekPlus1 = new Date(nextWeek);
+      nextWeekPlus1.setDate(nextWeekPlus1.getDate() + 1);
+      const nextWeekPlus1Str = nextWeekPlus1.toISOString().split("T")[0];
+
+      const errors = validateReservationData({
+        ...validPayload,
+        checkIn: nextWeekStr,
+        checkOut: nextWeekPlus1Str,
+      });
+
+      expect(errors.filter((e) => e.includes("check-in"))).toHaveLength(0);
+    });
+
+    it("deve validar corretamente múltiplas datas de check-in", () => {
+      const { validateReservationData } = useReservation();
+
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split("T")[0];
+      const dayAfter = new Date(tomorrow);
+      dayAfter.setDate(dayAfter.getDate() + 1);
+      const dayAfterStr = dayAfter.toISOString().split("T")[0];
+
+      // Teste com hoje
+      const errorsToday = validateReservationData({
+        ...validPayload,
+        checkIn: todayStr,
+        checkOut: tomorrowStr,
+      });
+      expect(errorsToday.filter((e) => e.includes("check-in deve ser"))).toHaveLength(0);
+
+      // Teste com amanhã
+      const errorsTomorrow = validateReservationData({
+        ...validPayload,
+        checkIn: tomorrowStr,
+        checkOut: dayAfterStr,
+      });
+      expect(errorsTomorrow.filter((e) => e.includes("check-in deve ser"))).toHaveLength(0);
+    });
+  });
 });
+
