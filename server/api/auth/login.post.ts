@@ -16,7 +16,6 @@ interface LoginResponse {
   error?: string;
 }
 
-// Mock de usuários para demonstração
 const MOCK_USERS = [
   {
     id: "1",
@@ -37,10 +36,8 @@ const MOCK_USERS = [
 export default defineEventHandler(async (event): Promise<LoginResponse> => {
   const body = (await readBody(event)) as LoginPayload;
 
-  // Simular delay de processamento
   await new Promise((resolve) => setTimeout(resolve, 800));
 
-  // Validações básicas
   if (!body.email?.trim()) {
     throw createError({
       statusCode: 400,
@@ -57,7 +54,6 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
     });
   }
 
-  // Buscar usuário no mock
   const user = MOCK_USERS.find(
     (u) => u.email === body.email && u.password === body.password
   );
@@ -70,7 +66,6 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
     });
   }
 
-  // Gerar token (mock - em produção seria JWT)
   const token = Buffer.from(
     JSON.stringify({
       userId: user.id,
@@ -79,7 +74,6 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
     })
   ).toString("base64");
 
-  // Configurar cookie httpOnly
   setCookie(event, "auth-token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -88,7 +82,6 @@ export default defineEventHandler(async (event): Promise<LoginResponse> => {
     path: "/",
   });
 
-  // Retornar dados do usuário (sem senha)
   return {
     success: true,
     user: {

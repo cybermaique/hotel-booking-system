@@ -20,7 +20,6 @@
   },
   "devDependencies": {
     "@cypress/vue": "^6.0.1",
-    "@cypress/webpack-dev-server": "^3.11.0",
     "@nuxt/devtools": "latest",
     "@nuxtjs/tailwindcss": "^6.8.4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -41,7 +40,8 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.5.1",
+    "dayjs": "^1.11.18",
     "pinia": "^2.1.7"
   },
-  "version": "1.1.0"
+  "version": "1.1.1"
 }

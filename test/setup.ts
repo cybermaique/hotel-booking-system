@@ -85,6 +85,97 @@ vi.stubGlobal(
   }))
 );
 
+vi.stubGlobal(
+  "useDateUtils",
+  vi.fn(() => ({
+    getTodayString: () => new Date().toISOString().split('T')[0],
+    getTomorrowString: () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    },
+    parseLocalDate: (dateStr: string) => new Date(dateStr + 'T00:00:00'),
+    formatDate: (date: Date) => date.toISOString().split('T')[0],
+    addDays: (dateStr: string, days: number) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      date.setDate(date.getDate() + days);
+      return date.toISOString().split('T')[0];
+    },
+    diffInDays: (startStr: string, endStr: string) => {
+      const start = new Date(startStr + 'T00:00:00');
+      const end = new Date(endStr + 'T00:00:00');
+      return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    },
+    isTodayOrFuture: (dateStr: string) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    },
+    isPast: (dateStr: string) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date < today;
+    },
+    isBefore: (date1Str: string, date2Str: string) => {
+      const date1 = new Date(date1Str + 'T00:00:00');
+      const date2 = new Date(date2Str + 'T00:00:00');
+      return date1 < date2;
+    },
+    isAfter: (date1Str: string, date2Str: string) => {
+      const date1 = new Date(date1Str + 'T00:00:00');
+      const date2 = new Date(date2Str + 'T00:00:00');
+      return date1 > date2;
+    },
+    isSame: (date1Str: string, date2Str: string) => {
+      const date1 = new Date(date1Str + 'T00:00:00');
+      const date2 = new Date(date2Str + 'T00:00:00');
+      return date1.getTime() === date2.getTime();
+    },
+    getNextFriday: () => {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilFriday = dayOfWeek === 5 ? 7 : (5 - dayOfWeek + 7) % 7 || 7;
+      today.setDate(today.getDate() + daysUntilFriday);
+      return today.toISOString().split('T')[0];
+    },
+    getNextSunday: () => {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilFriday = dayOfWeek === 5 ? 7 : (5 - dayOfWeek + 7) % 7 || 7;
+      today.setDate(today.getDate() + daysUntilFriday + 2);
+      return today.toISOString().split('T')[0];
+    },
+    getNextWeek: () => {
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      return nextWeek.toISOString().split('T')[0];
+    },
+    getNextWeekEnd: () => {
+      const nextWeekEnd = new Date();
+      nextWeekEnd.setDate(nextWeekEnd.getDate() + 9);
+      return nextWeekEnd.toISOString().split('T')[0];
+    },
+    getNextMonth: () => {
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      return nextMonth.toISOString().split('T')[0];
+    },
+    getNextMonthEnd: () => {
+      const nextMonthEnd = new Date();
+      nextMonthEnd.setMonth(nextMonthEnd.getMonth() + 1);
+      nextMonthEnd.setDate(nextMonthEnd.getDate() + 3);
+      return nextMonthEnd.toISOString().split('T')[0];
+    },
+    addYears: (dateStr: string, years: number) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      date.setFullYear(date.getFullYear() + years);
+      return date.toISOString().split('T')[0];
+    },
+  }))
+);
+
 const AtomButtonStub = {
   name: "AtomButton",
   inheritAttrs: false,

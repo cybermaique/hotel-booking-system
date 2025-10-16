@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-    <!-- Header Section -->
+    
     <div class="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40">
       <div class="container mx-auto px-4" :class="isBareHotels ? 'py-3' : 'py-6'">
         <div class="flex items-center justify-between">
-          <!-- Mostrar título/subtítulo apenas quando houver parâmetros -->
+          
           <div class="flex items-center" v-if="!isBareHotels">
             <div>
               <h1 class="text-2xl md:text-3xl font-display font-bold text-gray-900">
@@ -17,7 +17,7 @@
             </div>
           </div>
 
-          <!-- Botão comparar continua visível normalmente -->
+          
           <div v-if="selectedHotels.length >= 2" class="hidden md:block ml-auto">
             <AtomButton variant="primary" @click="navigateToCompare"
               class="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 shadow-glow">
@@ -30,7 +30,7 @@
 
     <div class="container mx-auto px-4 py-8">
       <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar Filters -->
+        
         <div class="lg:w-80 flex-shrink-0">
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft border border-white/50 p-6 sticky top-32">
             <h3 class="font-display font-bold text-gray-900 mb-6 text-lg">Filtros</h3>
@@ -112,7 +112,7 @@
           </div>
         </div>
 
-        <!-- Main Content -->
+        
         <div class="flex-1">
           <!-- Loading State -->
           <div v-if="pending" class="grid grid-cols-1 lg:grid-cols-2 auto-rows-fr gap-6">

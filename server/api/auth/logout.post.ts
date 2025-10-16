@@ -5,7 +5,6 @@ interface LogoutResponse {
 }
 
 export default defineEventHandler(async (event): Promise<LogoutResponse> => {
-  // Remover cookie de autenticação
   deleteCookie(event, "auth-token", {
     path: "/",
   });

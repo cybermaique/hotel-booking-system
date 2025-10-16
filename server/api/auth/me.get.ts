@@ -7,7 +7,6 @@ interface UserResponse {
   roles: string[];
 }
 
-// Mock de usuários (deve ser o mesmo do login)
 const MOCK_USERS = [
   {
     id: "1",
@@ -27,7 +26,6 @@ const MOCK_USERS = [
 
 export default defineEventHandler(
   async (event): Promise<UserResponse | null> => {
-    // Obter token do cookie
     const token = getCookie(event, "auth-token");
 
     if (!token) {
@@ -35,10 +33,8 @@ export default defineEventHandler(
     }
 
     try {
-      // Decodificar token (mock - em produção seria verificação JWT)
       const decoded = JSON.parse(Buffer.from(token, "base64").toString());
 
-      // Verificar se token não expirou (7 dias)
       const tokenAge = Date.now() - decoded.timestamp;
       const maxAge = 60 * 60 * 24 * 7 * 1000; // 7 dias em ms
 
@@ -46,14 +42,12 @@ export default defineEventHandler(
         return null;
       }
 
-      // Buscar usuário
       const user = MOCK_USERS.find((u) => u.id === decoded.userId);
 
       if (!user) {
         return null;
       }
 
-      // Retornar dados do usuário (sem senha)
       return {
         id: user.id,
         name: user.name,
@@ -61,7 +55,6 @@ export default defineEventHandler(
         roles: user.roles,
       };
     } catch (error) {
-      // Token inválido
       return null;
     }
   }
