@@ -168,6 +168,18 @@ const emit = defineEmits<{
   search: [params: SearchForm]
 }>()
 
+const { 
+  getTodayString, 
+  isTodayOrFuture, 
+  isAfter, 
+  getNextFriday, 
+  getNextSunday, 
+  getNextWeek, 
+  getNextWeekEnd, 
+  getNextMonth, 
+  getNextMonthEnd 
+} = useDateUtils()
+
 const searchForm = reactive<SearchForm>({
   destination: '',
   checkIn: '',
@@ -216,51 +228,8 @@ const quickFilters = [
   { label: 'Próximo mês', checkIn: getNextMonth(), checkOut: getNextMonthEnd() }
 ]
 
-const minDate = computed(() => {
-  const today = new Date()
-  return today.toISOString().split('T')[0]
-})
-
-function getNextFriday() {
-  const today = new Date()
-  const dayOfWeek = today.getDay()
-  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7
-  const friday = new Date(today)
-  friday.setDate(today.getDate() + daysUntilFriday)
-  return friday.toISOString().split('T')[0]
-}
-
-function getNextSunday() {
-  const friday = new Date(getNextFriday())
-  friday.setDate(friday.getDate() + 2)
-  return friday.toISOString().split('T')[0]
-}
-
-function getNextWeek() {
-  const today = new Date()
-  const nextWeek = new Date(today)
-  nextWeek.setDate(today.getDate() + 7)
-  return nextWeek.toISOString().split('T')[0]
-}
-
-function getNextWeekEnd() {
-  const nextWeek = new Date(getNextWeek())
-  nextWeek.setDate(nextWeek.getDate() + 2)
-  return nextWeek.toISOString().split('T')[0]
-}
-
-function getNextMonth() {
-  const today = new Date()
-  const nextMonth = new Date(today)
-  nextMonth.setMonth(today.getMonth() + 1)
-  return nextMonth.toISOString().split('T')[0]
-}
-
-function getNextMonthEnd() {
-  const nextMonth = new Date(getNextMonth())
-  nextMonth.setDate(nextMonth.getDate() + 3)
-  return nextMonth.toISOString().split('T')[0]
-}
+// Usa dayjs para obter data atual no fuso local
+const minDate = computed(() => getTodayString())
 
 const selectDestination = (destination: string) => {
   searchForm.destination = destination
@@ -295,17 +264,13 @@ const validateForm = (): boolean => {
   }
 
   if (searchForm.checkIn && searchForm.checkOut) {
-    const checkInDate = new Date(searchForm.checkIn)
-    const checkOutDate = new Date(searchForm.checkOut)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    if (checkInDate < today) {
+    // Usa dayjs para validação correta de datas no fuso local
+    if (!isTodayOrFuture(searchForm.checkIn)) {
       errors.checkIn = 'Data de check-in deve ser hoje ou no futuro'
       isValid = false
     }
 
-    if (checkOutDate <= checkInDate) {
+    if (!isAfter(searchForm.checkOut, searchForm.checkIn)) {
       errors.checkOut = 'Data de check-out deve ser após o check-in'
       isValid = false
     }
@@ -356,3 +321,4 @@ const onDestinationBlur = () => {
 }
 
 </script>
+

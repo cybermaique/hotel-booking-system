@@ -119,6 +119,16 @@ const emit = defineEmits<{
 }>()
 
 const { validateReservationData, calculateTotalPrice, formatCurrency } = useReservation()
+const { 
+  getTodayString, 
+  getTomorrowString, 
+  addDays, 
+  addYears, 
+  diffInDays, 
+  isTodayOrFuture, 
+  isPast, 
+  isAfter 
+} = useDateUtils()
 
 const loading = ref(false)
 const statusMessage = ref<{ type: 'success' | 'error', text: string } | null>(null)
@@ -176,122 +186,116 @@ const paymentOptions = [
 ]
 
 const nights = computed(() => {
-  if (!form.checkIn || !form.checkOut) return 0;
-  const ci = new Date(form.checkIn);
-  const co = new Date(form.checkOut);
-  const diff = co.getTime() - ci.getTime();
-  if (isNaN(diff) || diff <= 0) return 0;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-});
+  if (!form.checkIn || !form.checkOut) return 0
+  const diff = diffInDays(form.checkIn, form.checkOut)
+  return diff > 0 ? diff : 0
+})
 
 const subtotal = computed(() => {
-  if (nights.value <= 0) return 0;
-  return calculateTotalPrice(props.hotel.pricePerNight, form.checkIn, form.checkOut, parseInt(form.rooms));
-});
+  if (nights.value <= 0) return 0
+  return calculateTotalPrice(props.hotel.pricePerNight, form.checkIn, form.checkOut, parseInt(form.rooms))
+})
 
 const taxes = computed(() => {
-  return subtotal.value > 0 ? subtotal.value * 0.1 : 0;
-});
+  return subtotal.value > 0 ? subtotal.value * 0.1 : 0
+})
 
-const total = computed(() => subtotal.value + taxes.value);
+const total = computed(() => subtotal.value + taxes.value)
 
 const isCardMethod = computed(() =>
   form.paymentMethod === 'credit_card' || form.paymentMethod === 'debit_card'
-);
+)
 
 const isFormValid = computed(() => {
   // obrigatórios
-  if (!form.checkIn || !form.checkOut) return false;
-  if (nights.value <= 0) return false;
-  if (!isValidFullName(form.guestName)) return false;
-  if (!isValidEmail(form.guestEmail)) return false;
-  if (!isValidPhoneBR(form.guestPhone)) return false;
-  if (!form.paymentMethod) return false;
+  if (!form.checkIn || !form.checkOut) return false
+  if (nights.value <= 0) return false
+  if (!isValidFullName(form.guestName)) return false
+  if (!isValidEmail(form.guestEmail)) return false
+  if (!isValidPhoneBR(form.guestPhone)) return false
+  if (!form.paymentMethod) return false
 
-  // datas
-  const checkInDate = new Date(form.checkIn);
-  const checkOutDate = new Date(form.checkOut);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  if (checkInDate < today) return false;
-  if (checkOutDate <= checkInDate) return false;
+  // datas - usa dayjs para validação correta
+  if (isPast(form.checkIn)) return false
+  if (!isAfter(form.checkOut, form.checkIn)) return false
 
   // cartão (se selecionado)
   if (isCardMethod.value) {
-    if (!luhnOk(form.cardNumber)) return false;
-    if (!isValidExpiryMMYY(form.cardExpiry)) return false;
-    if (!isValidCVV(form.cardCvv)) return false;
-    if (!isValidFullName(form.cardName)) return false;
+    if (!luhnOk(form.cardNumber)) return false
+    if (!isValidExpiryMMYY(form.cardExpiry)) return false
+    if (!isValidCVV(form.cardCvv)) return false
+    if (!isValidFullName(form.cardName)) return false
   }
-  return true;
-});
+  return true
+})
 
-const nameWordRe = /^[\p{L}][\p{L}'’.-]*$/u; // aceita letras (com acento), hífen, apóstrofo, ponto
+const nameWordRe = /^[\p{L}][\p{L}''.-]*$/u // aceita letras (com acento), hífen, apóstrofo, ponto
 
 function isValidFullName(v: string): boolean {
-  if (!v) return false;
-  const parts = v.trim().split(/\s+/).filter(Boolean);
-  if (parts.length < 2) return false;            // nome + sobrenome
-  if (v.replace(/\s/g, '').length < 3) return false; // pelo menos 3 chars “úteis”
-  return parts.every(p => nameWordRe.test(p) && p.length >= 2);
+  if (!v) return false
+  const parts = v.trim().split(/\s+/).filter(Boolean)
+  if (parts.length < 2) return false            // nome + sobrenome
+  if (v.replace(/\s/g, '').length < 3) return false // pelo menos 3 chars "úteis"
+  return parts.every(p => nameWordRe.test(p) && p.length >= 2)
 }
 
 function isValidEmail(v: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 }
 
 function isValidPhoneBR(v: string): boolean {
-  const digits = v.replace(/\D/g, '');
+  const digits = v.replace(/\D/g, '')
   // BR: 10 (fixo) ou 11 (celular com 9)
-  return digits.length === 10 || digits.length === 11;
+  return digits.length === 10 || digits.length === 11
 }
 
 function luhnOk(num: string): boolean {
-  const digits = num.replace(/\s/g, '');
-  let sum = 0, alt = false;
+  const digits = num.replace(/\s/g, '')
+  let sum = 0, alt = false
   for (let i = digits.length - 1; i >= 0; i--) {
-    let n = parseInt(digits[i], 10);
+    let n = parseInt(digits[i], 10)
     if (alt) { n *= 2; if (n > 9) n -= 9; }
-    sum += n; alt = !alt;
+    sum += n; alt = !alt
   }
-  return sum % 10 === 0 && digits.length >= 13 && digits.length <= 19;
+  return sum % 10 === 0 && digits.length >= 13 && digits.length <= 19
 }
 
 function isValidExpiryMMYY(v: string): boolean {
-  const m = /^(\d{2})\/(\d{2})$/.exec(v);
-  if (!m) return false;
-  const mm = +m[1], yy = +m[2];
-  if (mm < 1 || mm > 12) return false;
-  const year = 2000 + yy;
-  const now = new Date();
-  const end = new Date(year, mm, 0, 23, 59, 59); // último dia do mês
-  return end >= new Date(now.getFullYear(), now.getMonth(), 1);
+  const m = /^(\d{2})\/(\d{2})$/.exec(v)
+  if (!m) return false
+  const mm = +m[1], yy = +m[2]
+  if (mm < 1 || mm > 12) return false
+  const year = 2000 + yy
+  const now = new Date()
+  const end = new Date(year, mm, 0, 23, 59, 59) // último dia do mês
+  return end >= new Date(now.getFullYear(), now.getMonth(), 1)
 }
 
 function isValidCVV(v: string): boolean {
-  return /^\d{3,4}$/.test(v.trim());
+  return /^\d{3,4}$/.test(v.trim())
 }
 
 function handleNameBlur() {
   errors.guestName = isValidFullName(form.guestName)
     ? ''
-    : 'Informe seu nome completo (nome e sobrenome, apenas letras).';
+    : 'Informe seu nome completo (nome e sobrenome, apenas letras).'
 }
 
 function handleEmailBlur() {
   errors.guestEmail = isValidEmail(form.guestEmail)
     ? ''
-    : 'Digite um e-mail válido (ex.: nome@dominio.com).';
+    : 'Digite um e-mail válido (ex.: nome@dominio.com).'
 }
 
 function sanitizePhone(e: Event) {
-  const el = e.target as HTMLInputElement;
-  form.guestPhone = el.value.replace(/[^\d ()+-]/g, '');
+  const el = e.target as HTMLInputElement
+  form.guestPhone = el.value.replace(/[^\d ()+-]/g, '')
 }
 
 function handlePhoneBlur() {
   errors.guestPhone = isValidPhoneBR(form.guestPhone)
     ? ''
-    : 'Telefone inválido. Use DDD + número (10–11 dígitos).';
+    : 'Telefone inválido. Use DDD + número (10–11 dígitos).'
 }
 
 const statusClasses = computed(() => {
@@ -360,49 +364,52 @@ const validateForm = () => {
   return validationErrors.length === 0
 }
 
-function toISODate(d: Date) { return d.toISOString().split('T')[0]; }
-
-const today = new Date(); today.setHours(0, 0, 0, 0);
-const minCheckIn = computed(() => toISODate(today));
-const maxCheckIn = computed(() => {
-  const d = new Date(today); d.setFullYear(d.getFullYear() + 1);
-  return toISODate(d);
-});
+// Usa dayjs para obter datas no fuso local
+const minCheckIn = computed(() => getTodayString())
+const maxCheckIn = computed(() => addYears(getTodayString(), 1))
 const minCheckOut = computed(() => {
   // check-out mínimo é dia seguinte ao check-in (se existir), senão amanhã
   if (!form.checkIn) {
-    const d = new Date(today); d.setDate(d.getDate() + 1);
-    return toISODate(d);
+    return getTomorrowString()
   }
-  const d = new Date(form.checkIn); d.setDate(d.getDate() + 1);
-  return toISODate(d);
-});
+  return addDays(form.checkIn, 1)
+})
 
 function handleCheckInBlur() {
-  errors.checkIn = '';
-  if (!form.checkIn) { errors.checkIn = 'Selecione a data de check-in.'; return; }
-  const ci = new Date(form.checkIn);
-  if (ci < today) { errors.checkIn = 'Check-in não pode ser no passado.'; }
+  errors.checkIn = ''
+  if (!form.checkIn) { 
+    errors.checkIn = 'Selecione a data de check-in.'
+    return
+  }
+  
+  // Usa dayjs para validação correta no fuso local
+  if (isPast(form.checkIn)) { 
+    errors.checkIn = 'Check-in não pode ser no passado.'
+  }
 
   if (form.checkOut) {
-    const co = new Date(form.checkOut);
-    if (co <= ci) {
-      errors.checkOut = 'Check-out deve ser após o check-in.';
+    if (!isAfter(form.checkOut, form.checkIn)) {
+      errors.checkOut = 'Check-out deve ser após o check-in.'
     } else {
-      errors.checkOut = '';
+      errors.checkOut = ''
     }
   }
 }
 
 function handleCheckOutBlur() {
-  errors.checkOut = '';
-  if (!form.checkOut) { errors.checkOut = 'Selecione a data de check-out.'; return; }
-  if (!form.checkIn) { errors.checkOut = 'Informe o check-in primeiro.'; return; }
+  errors.checkOut = ''
+  if (!form.checkOut) { 
+    errors.checkOut = 'Selecione a data de check-out.'
+    return
+  }
+  if (!form.checkIn) { 
+    errors.checkOut = 'Informe o check-in primeiro.'
+    return
+  }
 
-  const ci = new Date(form.checkIn);
-  const co = new Date(form.checkOut);
-  if (co <= ci) {
-    errors.checkOut = 'Check-out deve ser após o check-in.';
+  // Usa dayjs para validação correta no fuso local
+  if (!isAfter(form.checkOut, form.checkIn)) {
+    errors.checkOut = 'Check-out deve ser após o check-in.'
   }
 }
 
@@ -452,22 +459,18 @@ const handleSubmit = async () => {
 }
 
 watch(() => form.checkIn, () => {
-  if (errors.checkIn) handleCheckInBlur();
-  if (form.checkOut) handleCheckOutBlur();
-});
+  if (errors.checkIn) handleCheckInBlur()
+  if (form.checkOut) handleCheckOutBlur()
+})
 
 watch(() => form.checkOut, () => {
-  if (errors.checkOut) handleCheckOutBlur();
-});
+  if (errors.checkOut) handleCheckOutBlur()
+})
 
 onMounted(() => {
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const dayAfter = new Date(tomorrow)
-  dayAfter.setDate(dayAfter.getDate() + 1)
-
-  form.checkIn = tomorrow.toISOString().split('T')[0]
-  form.checkOut = dayAfter.toISOString().split('T')[0]
+  // Usa dayjs para inicializar datas padrão
+  form.checkIn = getTomorrowString()
+  form.checkOut = addDays(getTomorrowString(), 1)
 })
 </script>
+

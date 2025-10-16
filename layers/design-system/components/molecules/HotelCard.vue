@@ -2,34 +2,29 @@
   <div ref="cardEl"
     class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft hover:shadow-medium overflow-hidden transition-all duration-300 border border-white/50 hover:border-primary-200">
     <div class="relative overflow-hidden">
-      <!-- Image Gallery -->
       <div class="relative h-64 md:h-48 lg:h-56">
         <img :src="currentImage" :alt="`Imagem do hotel ${hotel.name}`"
           class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
 
-        <!-- Image Navigation -->
-        <div v-if="hotel.images.length > 1" class="absolute inset-x-0 bottom-4 flex justify-center gap-2">
-          <button v-for="(image, index) in hotel.images.slice(0, 4)" :key="index" type="button"
+        <div v-if="(hotel.images?.length ?? 0) > 1" class="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+          <button v-for="(image, index) in (hotel.images ?? []).slice(0, 4)" :key="index" type="button"
             @click="currentImageIndex = index" :class="[
               'w-2 h-2 rounded-full transition-all duration-200',
               currentImageIndex === index ? 'bg-white scale-125' : 'bg-white/60 hover:bg-white/80'
             ]" :aria-label="`Ir para imagem ${index + 1}`" />
         </div>
 
-        <!-- Overlay Gradient -->
         <div
           class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         </div>
       </div>
 
-      <!-- Badges -->
       <div class="absolute top-4 right-4">
         <AtomBadge :variant="hotel.featured ? 'primary' : 'secondary'" class="backdrop-blur-sm bg-white/90 shadow-soft">
           {{ hotel.featured ? 'Destaque' : hotel.category }}
         </AtomBadge>
       </div>
 
-      <!-- Compare Checkbox -->
       <div v-if="showCompareCheckbox" class="absolute top-4 left-4">
         <label class="flex items-center cursor-pointer group/checkbox">
           <input type="checkbox" data-testid="compare-checkbox" name="compare" class="sr-only" :checked="isSelected"
@@ -51,7 +46,6 @@
         </label>
       </div>
 
-      <!-- Favorite Button -->
       <button type="button"
         class="absolute bottom-4 right-8 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-soft hover:bg-white hover:scale-110 transition-all duration-200 group/heart"
         aria-label="Favoritar hotel">
@@ -64,7 +58,6 @@
     </div>
 
     <div class="p-6">
-      <!-- Header -->
       <div class="flex justify-between items-start mb-3">
         <div class="flex-1 min-w-0">
           <h3
@@ -88,18 +81,18 @@
         </div>
       </div>
 
-      <!-- Amenities -->
       <div class="flex flex-wrap gap-2 mb-4">
-        <AtomBadge v-for="amenity in hotel.amenities.slice(0, 3)" :key="amenity" variant="outline" size="sm"
+        <AtomBadge v-for="amenity in (hotel.amenities ?? []).slice(0, 3)" :key="amenity" variant="outline" size="sm"
           class="bg-gray-50/80 hover:bg-primary-50 transition-colors">
           {{ amenity }}
         </AtomBadge>
-        <AtomBadge v-if="hotel.amenities.length > 3" variant="outline" size="sm" class="bg-gray-50/80 text-gray-500">
-          +{{ hotel.amenities.length - 3 }}
+
+        <AtomBadge v-if="(hotel.amenities?.length ?? 0) > 3" variant="outline" size="sm"
+          class="bg-gray-50/80 text-gray-500">
+          +{{ (hotel.amenities?.length ?? 0) - 3 }}
         </AtomBadge>
       </div>
 
-      <!-- Price and Action -->
       <div class="flex items-center justify-between">
         <div>
           <strong class="text-2xl font-bold text-gray-900">R$ {{ hotel.pricePerNight.toLocaleString('pt-BR') }}</strong>
@@ -112,7 +105,6 @@
         </AtomButton>
       </div>
 
-      <!-- Quick Info -->
       <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
         <div class="flex items-center gap-4 text-xs text-gray-500">
           <div class="flex items-center gap-1">
@@ -145,8 +137,8 @@ import type { Hotel } from '~/types/hotel'
 interface Props {
   hotel: Hotel
   showCompareCheckbox?: boolean
-  selected?: boolean            // controlado pelo pai
-  limitReached?: boolean        // NOVO: pai informa se bateu no limite
+  selected?: boolean
+  limitReached?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -160,21 +152,17 @@ const emit = defineEmits<{
   'toggle-compare': [hotelId: string, selected: boolean]
 }>()
 
-// ---- estado derivado (controlado) ----
 const isSelected = computed(() => props.selected)
 
-// ---- imagens ----
 const currentImageIndex = ref(0)
 const currentImage = computed(() => props.hotel.images[currentImageIndex.value] || props.hotel.images[0])
 
-// checkbox: não altera estado local antes do pai confirmar
 const handleToggleCompare = (event: Event) => {
   const target = event.target as HTMLInputElement
   const wantSelect = target.checked
   emit('toggle-compare', props.hotel.id, wantSelect)
 }
 
-// auto-rotate por card (usando ref p/ não conflitar)
 const cardEl = ref<HTMLElement | null>(null)
 let imageRotationInterval: number | null = null
 

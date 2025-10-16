@@ -1,4 +1,4 @@
-describe("Detalhes do Hotel", () => {
+describe.only("Detalhes do Hotel", () => {
   const DEMO_USER = { email: "user@demo.com", password: "123456" };
   const HOTEL_URL = "/hotels/1";
 
@@ -90,8 +90,8 @@ describe("Detalhes do Hotel", () => {
     });
 
     it("deve exibir campos de datas", () => {
-      cy.get('[data-testid="checkin"] input').should("exist");
-      cy.get('[data-testid="checkout"] input').should("exist");
+      cy.get('input[data-testid="checkin"]').should("exist");
+      +cy.get('input[data-testid="checkout"]').should("exist");
     });
 
     it("deve exibir campos de hóspedes e quartos", () => {
@@ -107,11 +107,11 @@ describe("Detalhes do Hotel", () => {
 
     it("deve calcular valor total da reserva", () => {
       cy.get('[data-testid="booking-form"]').scrollIntoView();
-      cy.get('[data-testid="checkin"] input')
+      cy.get('input[data-testid="checkin"]')
         .should("be.visible")
         .clear()
         .type("2025-12-01", { force: true });
-      cy.get('[data-testid="checkout"] input')
+      cy.get('input[data-testid="checkout"]')
         .should("be.visible")
         .clear()
         .type("2025-12-05", { force: true });
@@ -119,29 +119,65 @@ describe("Detalhes do Hotel", () => {
     });
 
     it("deve permitir preencher formulário completo (mínimo para habilitar submit)", () => {
-      cy.get('[data-testid="booking-form"]')
-        .scrollIntoView()
-        .within(() => {
-          cy.get('[data-testid="checkin"] input')
-            .clear()
-            .type("2025-12-01", { force: true });
-          cy.get('[data-testid="checkout"] input')
-            .clear()
-            .type("2025-12-05", { force: true });
-          cy.get('select[name="rooms"]').select("1");
-          cy.get('select[name="guests"]').select("2");
-          cy.get('input[placeholder="Digite seu nome completo"]').type(
-            "Fulano de Tal"
-          );
-          cy.get('input[type="email"]').type("fulano@teste.com");
-          cy.get('input[type="tel"]').type("(11) 99999-9999");
+      cy.get('[data-testid="booking-form"]').should("exist").scrollIntoView();
 
-          cy.contains("label", "Forma de pagamento")
-            .invoke("attr", "for")
-            .then((id) => cy.get(`#${id}`).select("pix"));
+      cy.viewport(1280, 900);
 
-          cy.get('button[type="submit"]').should("not.be.disabled");
-        });
+      cy.get('[data-testid="booking-form"]').within(() => {
+        cy.get('input[data-testid="checkin"]')
+          .should("exist")
+          .scrollIntoView({ offset: { top: -100, left: 0 } })
+          .clear()
+          .type("2025-12-01", { force: true })
+          .blur();
+
+        cy.get('input[data-testid="checkout"]')
+          .should("exist")
+          .scrollIntoView({ offset: { top: -100, left: 0 } })
+          .clear()
+          .type("2025-12-05", { force: true })
+          .blur();
+
+        cy.get('select[name="rooms"]').should("exist").select("1");
+        cy.get('select[name="guests"]').should("exist").select("2");
+
+        cy.get('input[placeholder="Digite seu nome completo"]')
+          .should("exist")
+          .clear()
+          .type("Fulano da Silva");
+
+        cy.get('input[type="email"]')
+          .should("exist")
+          .clear()
+          .type("fulano@teste.com");
+
+        cy.get('input[type="tel"]')
+          .should("exist")
+          .clear()
+          .type("(11) 98888-7777");
+
+        cy.contains("label", "Forma de pagamento")
+          .invoke("attr", "for")
+          .then((id) => {
+            if (id) {
+              cy.get(`#${id}`).should("exist").select("pix");
+            } else {
+              cy.get('select[id*="payment"], select[name*="payment"]')
+                .first()
+                .should("exist")
+                .select("pix");
+            }
+          });
+
+        cy.get('[data-testid="price-summary"]')
+          .scrollIntoView({ offset: { top: -120, left: 0 } })
+          .should("exist")
+          .and(($el) => {
+            expect($el.text()).to.include("Total");
+          });
+
+        cy.get('button[type="submit"]').should("not.be.disabled");
+      });
     });
 
     it("deve validar formato de email (sem precisar clicar no submit)", () => {

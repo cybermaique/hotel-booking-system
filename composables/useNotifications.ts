@@ -1,4 +1,3 @@
-// ~/composables/useNotifications.ts
 import { ref, readonly } from "vue";
 
 interface Notification {
@@ -10,7 +9,6 @@ interface Notification {
   persistent?: boolean;
 }
 
-// Store global (usado somente fora de testes)
 const globalStore = ref<Notification[]>([]);
 
 const isTestEnv =
@@ -18,14 +16,7 @@ const isTestEnv =
   typeof process.env !== "undefined" &&
   process.env.NODE_ENV === "test";
 
-/**
- * Composable para gerenciar notificações (toast).
- *
- * Em ambiente de TESTE cada chamada cria um estado próprio (evita “vazamento”
- * entre specs). Em runtime, usa um store global compartilhado.
- */
 export const useNotifications = () => {
-  // Em teste: store local por instância. Em runtime: singleton global.
   const store = isTestEnv ? ref<Notification[]>([]) : globalStore;
 
   const addNotification = (notification: Omit<Notification, "id">) => {
@@ -35,7 +26,7 @@ export const useNotifications = () => {
       id,
       duration: 5000,
       persistent: false,
-      ...notification, // permite sobrescrever duration/persistent etc.
+      ...notification,
     };
 
     store.value.push(newNotification);
@@ -55,7 +46,6 @@ export const useNotifications = () => {
   };
 
   const clearAll = () => {
-    // preserva a referência do ref
     store.value.length = 0;
   };
 
@@ -134,3 +124,4 @@ export const useNotifications = () => {
     loading,
   };
 };
+
